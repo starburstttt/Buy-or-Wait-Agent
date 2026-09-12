@@ -1,7 +1,6 @@
 log.txt
+.env
 __pycache__/
-*.pyc
 .venv/
 cache/
-.env
 .claude/
