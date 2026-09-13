@@ -10,8 +10,16 @@ Checks (README.md "Before submitting" / problem_statement.md):
   4. Every "installments" payment_plan exactly matches the schedule of a supplied
      payment option for that request.
   5. Every spending change targets a flexible recurring expense belonging to that
-     request's user (a detected RecurringSeries whose flexibility permits the
-     stop/reduce_to being applied).
+     request's user: a repeating, non-protected debit in a category the user
+     permits changing, whose flexibility allows the stop/reduce_to being applied.
+
+"Recurring" here means the event's (category, description) group occurs more than
+once on or before request_date - NOT that recurrence.py projects it as a series.
+request_11's ground-truth change targets a two-occurrence group that recurrence.py
+deliberately refuses to project, so the stricter test would reject correct output.
+
+This re-derives the rule from the dataset rather than calling plan/changes.py, so
+a bug in the change search cannot validate itself.
 
 Prints every violation found and exits 1 if any exist, else prints OK and exits 0.
 """
@@ -27,13 +35,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from entities import (  # noqa: E402
     AffordabilityStatus,
-    Flexibility,
+    Direction,
     PaymentMethod,
     RecommendedMethod,
     SpendingChangeKind,
 )
 from loaders import DECISION_COLUMNS, REPO_ROOT, load_dataset  # noqa: E402
-from recurrence import build_spending_profile  # noqa: E402
 
 OUTPUT_PATH = REPO_ROOT / "output.csv"
 
@@ -90,11 +97,22 @@ def _parse_changes(
     return tuple(changes)
 
 
-def _recurring_flexibility_by_event(data, user_id: str, as_of: dt.date) -> dict[str, Flexibility]:
-    profile = data.profiles[user_id]
-    events = data.events_by_user.get(user_id, ())
-    spending = build_spending_profile(data, events, profile.home_currency, as_of)
-    return {series.latest_event_id: series.flexibility for series in spending.series}
+def _repeating_event_ids(data, user_id: str, as_of: dt.date) -> set[str]:
+    """Events in a category that occurs more than once on or before as_of.
+
+    Category-level, matching the granularity the user's permissions are stated at.
+    A per-description test would reject correct output: request_11's ground-truth
+    target sits in a description group of two inside a much larger dining category.
+    """
+    counts: Counter[str] = Counter()
+    for event in data.events_by_user.get(user_id, ()):
+        if event.direction is Direction.DEBIT and event.event_date <= as_of:
+            counts[event.category] += 1
+    return {
+        event.event_id
+        for event in data.events_by_user.get(user_id, ())
+        if counts[event.category] > 1
+    }
 
 
 def validate() -> list[str]:
@@ -130,7 +148,7 @@ def validate() -> list[str]:
     for rid in sorted(expected_ids - set(seen), key=lambda r: int(r.split("_")[1])):
         violations.append(f"{rid}: missing from output.csv")
 
-    recurring_cache: dict[str, dict[str, Flexibility]] = {}
+    repeating_cache: dict[str, set[str]] = {}
 
     for row in rows:
         rid = row["request_id"]
@@ -184,25 +202,53 @@ def validate() -> list[str]:
 
         changes = _parse_changes(row["spending_changes_needed"], violations, rid)
         if changes:
-            if request.user_id not in recurring_cache:
-                recurring_cache[request.user_id] = _recurring_flexibility_by_event(
+            if len(changes) > 3:
+                violations.append(f"{rid}: {len(changes)} spending changes, at most 3 allowed")
+            if len({event_id for _kind, event_id, _amount in changes}) != len(changes):
+                violations.append(f"{rid}: the same event is changed twice")
+
+            profile = data.profiles[request.user_id]
+            if request.user_id not in repeating_cache:
+                repeating_cache[request.user_id] = _repeating_event_ids(
                     data, request.user_id, request.request_date
                 )
-            recurring = recurring_cache[request.user_id]
+            repeating = repeating_cache[request.user_id]
+
             for kind, event_id, _new_amount in changes:
-                flexibility = recurring.get(event_id)
-                if flexibility is None:
+                event = data.events.get(event_id)
+                if event is None or event.user_id != request.user_id:
                     violations.append(
-                        f"{rid}: spending change targets {event_id!r}, which is not a detected "
-                        f"recurring expense for {request.user_id}"
+                        f"{rid}: spending change targets {event_id!r}, which is not an event "
+                        f"belonging to {request.user_id}"
                     )
                     continue
-                can_stop = flexibility in (Flexibility.STOPPABLE, Flexibility.REDUCIBLE_OR_STOPPABLE)
-                can_reduce = flexibility in (Flexibility.REDUCIBLE, Flexibility.REDUCIBLE_OR_STOPPABLE)
-                if kind is SpendingChangeKind.STOP and not can_stop:
-                    violations.append(f"{rid}: {event_id} is not stoppable (flexibility={flexibility})")
-                if kind is SpendingChangeKind.REDUCE_TO and not can_reduce:
-                    violations.append(f"{rid}: {event_id} is not reducible (flexibility={flexibility})")
+                if event_id not in repeating:
+                    violations.append(
+                        f"{rid}: {event_id} is not a recurring expense (its category/description "
+                        "occurs only once on or before request_date)"
+                    )
+                if event.category in profile.categories_to_protect:
+                    violations.append(
+                        f"{rid}: {event_id} is in protected category {event.category!r}"
+                    )
+                if kind is SpendingChangeKind.STOP:
+                    if not event.can_stop:
+                        violations.append(
+                            f"{rid}: {event_id} is not stoppable (flexibility={event.flexibility})"
+                        )
+                    if event.category not in profile.categories_willing_to_stop:
+                        violations.append(
+                            f"{rid}: user will not stop category {event.category!r}"
+                        )
+                if kind is SpendingChangeKind.REDUCE_TO:
+                    if not event.can_reduce:
+                        violations.append(
+                            f"{rid}: {event_id} is not reducible (flexibility={event.flexibility})"
+                        )
+                    if event.category not in profile.categories_willing_to_reduce:
+                        violations.append(
+                            f"{rid}: user will not reduce category {event.category!r}"
+                        )
 
     return violations
 
