@@ -7,6 +7,7 @@ tolerance-based check on amount_safe_to_pay. This is the instrument the
 forecast/plan logic gets built against, not a test suite bolted on after.
 """
 
+import os
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -14,8 +15,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from entities import Decision, SpendingChange  # noqa: E402
+from enrich.llm import LLMClient  # noqa: E402
 from loaders import load_dataset  # noqa: E402
-from solver import solve  # noqa: E402
+from solver import enrich_dataset, solve  # noqa: E402
+
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 
 AMOUNT_REL_TOLERANCE = Decimal("0.01")  # 1% of the expected amount
 AMOUNT_ABS_TOLERANCE = Decimal("0.01")  # floor, so near-zero amounts aren't absurdly strict
@@ -65,6 +69,8 @@ def amount_within_tolerance(expected: Decimal, actual: Decimal) -> bool:
 
 def run() -> int:
     data = load_dataset()
+    model = os.environ.get("MODEL", DEFAULT_MODEL)
+    data = enrich_dataset(data, LLMClient(), model=model)
     sample_ids = sorted(data.sample_requests, key=lambda rid: int(rid.split("_")[1]))
 
     misses: list[tuple[str, str, str, str]] = []

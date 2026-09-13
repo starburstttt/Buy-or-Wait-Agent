@@ -73,7 +73,7 @@ CATEGORIES: tuple[str, ...] = (
     "work_expense", "windfall",
 )
 
-MAX_OUTPUT_TOKENS = 300
+MAX_OUTPUT_TOKENS = 450
 
 SYSTEM_PROMPT = (
     "You extract ONE structured financial fact from a single account message. "
@@ -360,12 +360,14 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from loaders import load_dataset
 
-    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 5
+    arg = sys.argv[1] if len(sys.argv) > 1 else "5"
     data = load_dataset()
     all_messages = sorted(
         (m for tup in data.messages.values() for m in tup),
         key=lambda m: int(m.message_id.split("_")[1]),
-    )[:limit]
+    )
+    if arg != "all":
+        all_messages = all_messages[: int(arg)]
 
     model = os.environ.get("MODEL", "openai/gpt-oss-120b")
     llm = LLMClient()

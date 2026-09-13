@@ -45,7 +45,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from openai import OpenAI, RateLimitError
+from openai import BadRequestError, OpenAI, RateLimitError
 
 REQUESTS_PER_MINUTE = 30
 TOKENS_PER_MINUTE = 8_000
@@ -299,6 +299,14 @@ class LLMClient:
                     raise
                 time.sleep(_retry_after_seconds(error))
                 continue
+            except BadRequestError:
+                # gpt-oss's hidden reasoning trace can exhaust max_output_tokens before
+                # any JSON is emitted; Groq reports that as a 400 (json_validate_failed),
+                # not as truncated content. Surface it as an empty completion so the
+                # normal "invalid JSON, retry once, then unparseable" path in
+                # complete_fact() handles it - one bad message must not crash the batch.
+                self._last_call_monotonic = time.monotonic()
+                return ""
             break
         self._last_call_monotonic = time.monotonic()
 
