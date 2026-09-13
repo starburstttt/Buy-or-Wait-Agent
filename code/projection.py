@@ -95,8 +95,12 @@ def build_timeline(data: Dataset, request: Request, spending: SpendingProfile) -
     daily_variable = sum(
         (flow.monthly_amount_home for flow in spending.variable), Decimal(0)
     ) / DAYS_PER_MONTH
+    # Irregular salary is dripped rather than dated for the same reason variable
+    # spend is: the rate is well supported by history but the individual dates are
+    # not, and inventing pay dates would put fake precision into the trough.
+    daily_income = spending.monthly_income_home / DAYS_PER_MONTH
     for offset in range(1, span):
-        deltas[offset] -= daily_variable
+        deltas[offset] += daily_income - daily_variable
 
     balances: list[Decimal] = []
     running = profile.current_available_balance

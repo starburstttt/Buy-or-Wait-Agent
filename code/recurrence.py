@@ -74,6 +74,13 @@ VARIABLE_LOOKBACK_DAYS = 180
 # the full requested amount as safe when the true answer is almost nothing.
 STALE_CADENCE_MULTIPLE = Decimal("1.5")
 
+# Irregular salary (freelance/gig) projected at its observed monthly rate when the
+# stream is demonstrably still running. See _irregular_income_rate for why recency
+# rather than a scheduled future row is the right guard against inventing income.
+PROJECT_IRREGULAR_INCOME = True
+IRREGULAR_INCOME_MIN_OCCURRENCES = 3
+IRREGULAR_INCOME_STALE_MULTIPLE = Decimal("1.5")
+
 
 @dataclass(frozen=True, slots=True)
 class RecurringSeries:
@@ -106,6 +113,7 @@ class SpendingProfile:
     series: tuple[RecurringSeries, ...]
     variable: tuple[VariableFlow, ...]
     unresolved_amount_events: tuple[str, ...]
+    monthly_income_home: Decimal = Decimal(0)
 
 
 def _gaps(dates: list[dt.date]) -> list[int]:
@@ -204,6 +212,59 @@ def _salary_fallback(
     return _to_series(data, usable, home, cadence)
 
 
+def _irregular_income_rate(
+    data: Dataset,
+    events: tuple[Event, ...],
+    home: Currency,
+    as_of: dt.date,
+    aggregation: VariableAggregation,
+) -> Decimal:
+    """Monthly rate for salary that is real but too irregular to form a series.
+
+    Freelance and gig income does not fit CADENCE_BANDS and never has a scheduled
+    future row for _salary_fallback to lean on. user_09 is the clean case: ten
+    salary credits landing on the 7th and the 20th, so the gaps alternate
+    13/15/17/18 and no single band covers them, and every row is settled history.
+    The existing rules forecast that user zero income for 90 days while ~1,000 EUR
+    a month keeps arriving, which drags the projected trough far below the truth.
+
+    The guard against inventing income is RECENCY rather than a scheduled row: the
+    stream has to still be running as of request_date, measured against its own
+    typical gap. That still excludes the cases the dataset punishes for optimism -
+    user_05's payroll stops 52 days before the request on a row described 'Final
+    employer payroll', and user_12's contract income stops 80 days out. Both are
+    stale against their own cadence and keep forecasting zero.
+    """
+    history = [
+        event
+        for event in clean_history(events, as_of)
+        if event.category == SALARY_CATEGORY
+        and event.direction is Direction.CREDIT
+        and event.amount is not None
+    ]
+    if len(history) < IRREGULAR_INCOME_MIN_OCCURRENCES:
+        return Decimal(0)
+
+    history.sort(key=lambda event: event.event_date)
+    typical_gap = Decimal(str(statistics.median(_gaps([e.event_date for e in history]))))
+    if typical_gap <= 0:
+        return Decimal(0)
+    since = Decimal((as_of - history[-1].event_date).days)
+    if since > typical_gap * IRREGULAR_INCOME_STALE_MULTIPLE:
+        return Decimal(0)
+
+    monthly: dict[tuple[int, int], Decimal] = collections.defaultdict(Decimal)
+    for event in history:
+        on = event.settlement_date or event.event_date
+        monthly[(on.year, on.month)] += to_home(data, event.amount, event.currency, home, on)
+    buckets = [monthly[key] for key in sorted(monthly)]
+    # Same partial-month trim as variable spend: the first and last calendar months
+    # of a window are usually incomplete and understate the rate.
+    if len(buckets) >= 4:
+        buckets = buckets[1:-1]
+    return _aggregate(buckets, aggregation)
+
+
 def build_spending_profile(
     data: Dataset,
     events: tuple[Event, ...],
@@ -283,8 +344,20 @@ def build_spending_profile(
             )
         )
 
+    monthly_income = Decimal(0)
+    if PROJECT_IRREGULAR_INCOME and not any(s.category == SALARY_CATEGORY for s in series):
+        # A scheduled future salary row is already applied to the timeline as an
+        # explicit event, so dripping a rate on top of it would pay the user twice.
+        scheduled_ahead = any(
+            event.category == SALARY_CATEGORY and event.direction is Direction.CREDIT
+            for event in future_cash_events(events, as_of)
+        )
+        if not scheduled_ahead:
+            monthly_income = _irregular_income_rate(data, events, home, as_of, aggregation)
+
     return SpendingProfile(
         series=tuple(sorted(series, key=lambda s: (s.category, s.description))),
         variable=tuple(sorted(variable, key=lambda v: v.category)),
         unresolved_amount_events=unresolved,
+        monthly_income_home=monthly_income,
     )

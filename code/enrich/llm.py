@@ -51,6 +51,11 @@ REQUESTS_PER_MINUTE = 30
 TOKENS_PER_MINUTE = 8_000
 TOKENS_PER_DAY = 200_000
 MIN_SECONDS_BETWEEN_CALLS = 2.5
+
+# Deliberately generous stand-in for what one bill/payslip screenshot costs in vision
+# tokens. Only the rate limiter reads it; the real usage from the response replaces
+# it in the rolling window as soon as the call returns.
+IMAGE_TOKEN_ESTIMATE = 3_000
 MAX_RATE_LIMIT_RETRIES = 6
 DEFAULT_RETRY_AFTER_SECONDS = 5.0
 
@@ -256,8 +261,13 @@ class LLMClient:
         user: str,
         max_output_tokens: int,
         reasoning_effort: str | None,
+        image_data_url: str | None = None,
+        extra_token_estimate: int = 0,
     ) -> str:
-        estimated = _estimate_tokens(system, user) + max_output_tokens
+        # An image contributes tokens that no amount of measuring the TEXT can see,
+        # so the caller passes an estimate for it; without that the rolling
+        # per-minute window would under-count every vision call and pace into 429s.
+        estimated = _estimate_tokens(system, user) + max_output_tokens + extra_token_estimate
         if self._today_tokens() + estimated > TOKENS_PER_DAY:
             raise DailyBudgetExceeded(
                 f"{model}: today's usage plus this call's estimate would exceed the "
@@ -278,6 +288,13 @@ class LLMClient:
             # and keeps almost the whole budget for the answer itself.
             extra["reasoning_effort"] = reasoning_effort
 
+        user_content: Any = user
+        if image_data_url is not None:
+            user_content = [
+                {"type": "text", "text": user},
+                {"type": "image_url", "image_url": {"url": image_data_url}},
+            ]
+
         attempt = 0
         while True:
             attempt += 1
@@ -286,7 +303,7 @@ class LLMClient:
                     model=model,
                     messages=[
                         {"role": "system", "content": system},
-                        {"role": "user", "content": user},
+                        {"role": "user", "content": user_content},
                     ],
                     response_format={"type": "json_object"},
                     temperature=0,
@@ -328,6 +345,48 @@ class LLMClient:
         max_output_tokens: int = 300,
         reasoning_effort: str | None = "low",
     ) -> Completion:
+        """Text-only structured extraction."""
+        return self._complete_json(
+            model=model,
+            system=system,
+            user=user,
+            max_output_tokens=max_output_tokens,
+            reasoning_effort=reasoning_effort,
+        )
+
+    def complete_vision(
+        self,
+        *,
+        model: str,
+        system: str,
+        user: str,
+        image_data_url: str,
+        max_output_tokens: int = 200,
+        reasoning_effort: str | None = None,
+        image_token_estimate: int = IMAGE_TOKEN_ESTIMATE,
+    ) -> Completion:
+        """Structured extraction from one image, same JSON contract as complete_fact."""
+        return self._complete_json(
+            model=model,
+            system=system,
+            user=user,
+            max_output_tokens=max_output_tokens,
+            reasoning_effort=reasoning_effort,
+            image_data_url=image_data_url,
+            extra_token_estimate=image_token_estimate,
+        )
+
+    def _complete_json(
+        self,
+        *,
+        model: str,
+        system: str,
+        user: str,
+        max_output_tokens: int,
+        reasoning_effort: str | None,
+        image_data_url: str | None = None,
+        extra_token_estimate: int = 0,
+    ) -> Completion:
         """Call the model and return well-formed JSON, retrying invalid JSON once.
 
         This is the ONLY retry policy for malformed output. A RateLimitError is a
@@ -344,6 +403,8 @@ class LLMClient:
                 user=user,
                 max_output_tokens=max_output_tokens,
                 reasoning_effort=reasoning_effort,
+                image_data_url=image_data_url,
+                extra_token_estimate=extra_token_estimate,
             )
             last_raw = raw
             try:
