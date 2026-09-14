@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "no_fact",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "Message indicates payroll contract ended with no new amount or date provided.",
+    "target_category": null,
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"no_fact\",\"target_event_id\":null,\"target_category\":null,\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"Message indicates payroll contract ended with no new amount or date provided.\"}",
+  "status": "parsed"
+}

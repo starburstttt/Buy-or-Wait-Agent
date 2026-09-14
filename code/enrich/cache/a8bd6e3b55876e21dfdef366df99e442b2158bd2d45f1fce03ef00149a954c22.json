@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": "2024-06-05",
+    "kind": "confirm",
+    "new_amount": "1664400",
+    "new_currency": "IDR",
+    "note": "Unrealized portfolio valuation",
+    "target_category": null,
+    "target_event_id": "event_19182"
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":\"event_19182\",\"target_category\":null,\"new_amount\":\"1664400\",\"new_currency\":\"IDR\",\"effective_date\":\"2024-06-05\",\"note\":\"Unrealized portfolio valuation\"}",
+  "status": "parsed"
+}

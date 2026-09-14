@@ -1,0 +1,6 @@
+{
+  "detail": "cancel requires a target_event_id",
+  "fact": null,
+  "raw_text": "{\"kind\":\"cancel\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"Employment ended, no regular salary payments scheduled\"}",
+  "status": "schema_invalid"
+}

@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": "2025-08-23",
+    "kind": "amend",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"amend\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":null,\"new_currency\":null,\"effective_date\":\"2025-08-23\",\"note\":\"\"}",
+  "status": "parsed"
+}

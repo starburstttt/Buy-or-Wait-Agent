@@ -190,17 +190,29 @@ class LLMClient:
         base_url: str = GROQ_BASE_URL,
         state_path: Path = DAILY_STATE_PATH,
     ) -> None:
-        api_key = api_key or os.environ.get("GROQ_API_KEY")
-        if not api_key:
-            raise RuntimeError(
-                "GROQ_API_KEY is not set. Secrets are read from environment variables "
-                "only (AGENTS.md 6.4) - put it in .env, never in code."
-            )
-        self._client = OpenAI(api_key=api_key, base_url=base_url)
+        # Checked at the first real call, not here. Every result this client would
+        # produce is cached to disk, so a fully-cached run makes no call at all and
+        # must not require a key just to construct the object - otherwise the
+        # zero-cost rerun is only zero-cost for whoever already has credentials.
+        self._api_key = api_key or os.environ.get("GROQ_API_KEY")
+        self._base_url = base_url
+        self._openai: OpenAI | None = None
         self.usage = UsageTracker()
         self._last_call_monotonic: float | None = None
         self._minute_window: deque[tuple[float, int]] = deque()
         self._state_path = state_path
+
+    def _require_client(self) -> OpenAI:
+        if self._openai is None:
+            if not self._api_key:
+                raise RuntimeError(
+                    "GROQ_API_KEY is not set. Secrets are read from environment "
+                    "variables only (AGENTS.md 6.4) - put it in .env, never in code. "
+                    "A key is needed only for a cold run; an intact enrich/cache/ "
+                    "never reaches this point."
+                )
+            self._openai = OpenAI(api_key=self._api_key, base_url=self._base_url)
+        return self._openai
 
     # -- pacing -----------------------------------------------------------------
 
@@ -295,11 +307,12 @@ class LLMClient:
                 {"type": "image_url", "image_url": {"url": image_data_url}},
             ]
 
+        client = self._require_client()
         attempt = 0
         while True:
             attempt += 1
             try:
-                response = self._client.chat.completions.create(
+                response = client.chat.completions.create(
                     model=model,
                     messages=[
                         {"role": "system", "content": system},

@@ -25,13 +25,17 @@ from entities import (
     Request,
 )
 from enrich.apply import enrich_user_events
+from enrich.images import apply_amounts, resolve_all
 from enrich.llm import LLMClient
 from enrich.messages import extract_many
+from explain import explain
 from plan.candidates import generate, is_safe, outflow_curve
 from plan.changes import build_actions, search, verifier
 from plan.ranking import Plan, best
 from projection import amount_safe_to_pay, build_timeline, earliest_full_payment_date
 from recurrence import build_spending_profile
+
+DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b"
 
 # No solved sample pairs a not_affordable row with a non-empty
 # earliest_date_for_full_payment, which argues for blanking the field there. Held
@@ -44,14 +48,38 @@ from recurrence import build_spending_profile
 BLANK_EARLIEST_WHEN_NOT_AFFORDABLE = False
 
 
-def enrich_dataset(data: Dataset, llm: LLMClient, *, model: str) -> Dataset:
-    """Fold every user's message-derived facts into their events before solving.
+def _reindex(data: Dataset, events_by_user: dict[str, tuple]) -> Dataset:
+    """Rebuild both event views from one authority so they cannot drift apart.
 
-    Extraction is cached on message content (enrich/cache.py), so calling this once
-    per pipeline run costs API tokens only for messages never seen before; a rerun
-    over an unchanged dataset is all cache hits. Only events_by_user is replaced -
-    that is the only field solve() (via recurrence/projection/netting) reads events
-    from.
+    events_by_user is what solve() reads through recurrence/projection/netting;
+    data.events is the by-id lookup that enrich/ and explain/ use. Replacing only
+    the first leaves the second holding pre-enrichment rows - including the blank
+    amounts the image pass exists to fill - so both are rebuilt together, and
+    events synthesized by apply.py land in the index too.
+    """
+    events = {event.event_id: event for evs in events_by_user.values() for event in evs}
+    return dataclasses.replace(data, events_by_user=events_by_user, events=events)
+
+
+def enrich_dataset(
+    data: Dataset, llm: LLMClient, *, model: str, vision_model: str = DEFAULT_VISION_MODEL
+) -> Dataset:
+    """Fold message-derived facts and image-recovered amounts into the event set.
+
+    Both passes are cached on content (enrich/cache.py), so calling this once per
+    pipeline run costs API tokens only for items never seen before; a rerun over an
+    unchanged dataset is all cache hits.
+
+    ORDER IS LOAD-BEARING. Messages run first, for two independent reasons:
+
+    1. Cache validity. A message prompt embeds a snapshot of its related event, and
+       three of the sixteen blank-amount events are referenced by a message. Filling
+       those amounts first would change the prompt text, change the content hash, and
+       silently re-bill all 215 message extractions.
+    2. Precedence. problem_statement.md resolves conflicts with an explicit amendment
+       first. A message that states an amount IS such an amendment; the image is the
+       original document behind a field the CSV left blank. So apply_amounts only
+       fills events whose amount is still None, and a message-set amount wins.
     """
     events_by_user = dict(data.events_by_user)
     for user_id, messages in data.messages.items():
@@ -59,7 +87,16 @@ def enrich_dataset(data: Dataset, llm: LLMClient, *, model: str) -> Dataset:
         messages_by_id = {m.message_id: m for m in messages}
         merged, _log = enrich_user_events(data, user_id, extractions, messages_by_id)
         events_by_user[user_id] = merged
-    return dataclasses.replace(data, events_by_user=events_by_user)
+    data = _reindex(data, events_by_user)
+
+    # resolve_all raises rather than returning a partial result: a blank amount that
+    # silently stays blank is the "treat it as zero" the spec forbids, and it biases
+    # every affected forecast optimistic because the blanks are nearly all expenses.
+    amounts = resolve_all(data, llm, model=vision_model)
+    filled = {
+        user_id: apply_amounts(events, amounts) for user_id, events in data.events_by_user.items()
+    }
+    return _reindex(data, filled)
 
 
 def _status_for(plan: Plan) -> AffordabilityStatus:
@@ -123,7 +160,7 @@ def solve(data: Dataset, request: Request) -> Decision:
     chosen = best(plans)
 
     if chosen is None:
-        return Decision(
+        decision = Decision(
             request_id=request.request_id,
             amount_safe_to_pay=safe_today,
             affordability_status=AffordabilityStatus.NOT_AFFORDABLE,
@@ -135,8 +172,11 @@ def solve(data: Dataset, request: Request) -> Decision:
             spending_changes=(),
             decision_explanation="",
         )
+        return dataclasses.replace(
+            decision, decision_explanation=explain(data, request, profile, decision)
+        )
 
-    return Decision(
+    decision = Decision(
         request_id=request.request_id,
         amount_safe_to_pay=safe_today,
         affordability_status=_status_for(chosen),
@@ -145,4 +185,7 @@ def solve(data: Dataset, request: Request) -> Decision:
         earliest_date_for_full_payment=earliest,
         spending_changes=chosen.changes,
         decision_explanation="",
+    )
+    return dataclasses.replace(
+        decision, decision_explanation=explain(data, request, profile, decision)
     )

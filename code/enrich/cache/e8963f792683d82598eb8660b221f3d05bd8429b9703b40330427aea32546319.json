@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "no_fact",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "Message provides status update but no new amount, date, or cancellation of a pending item.",
+    "target_category": null,
+    "target_event_id": "event_17401"
+  },
+  "raw_text": "{\"kind\":\"no_fact\",\"target_event_id\":\"event_17401\",\"target_category\":null,\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"Message provides status update but no new amount, date, or cancellation of a pending item.\"}",
+  "status": "parsed"
+}

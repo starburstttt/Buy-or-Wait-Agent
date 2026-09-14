@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "confirm",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "Bill payment failed, another debit attempt will be made",
+    "target_category": null,
+    "target_event_id": "event_8575"
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":\"event_8575\",\"target_category\":null,\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"Bill payment failed, another debit attempt will be made\"}",
+  "status": "parsed"
+}

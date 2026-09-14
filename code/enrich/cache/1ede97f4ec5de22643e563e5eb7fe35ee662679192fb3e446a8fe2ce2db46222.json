@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "confirm",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "Regular salary USD 1752 and one-time arrears adjustment USD 788.40",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"Regular salary USD 1752 and one-time arrears adjustment USD 788.40\"}",
+  "status": "parsed"
+}

@@ -22,6 +22,7 @@ from solver import enrich_dataset, solve  # noqa: E402
 
 OUTPUT_PATH = REPO_ROOT / "output.csv"
 DEFAULT_MODEL = "openai/gpt-oss-120b"
+DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b"
 
 
 def format_decision(decision: Decision) -> dict[str, str]:
@@ -57,8 +58,9 @@ def main() -> int:
     data = load_dataset()
 
     model = os.environ.get("MODEL", DEFAULT_MODEL)
+    vision_model = os.environ.get("VISION_MODEL", DEFAULT_VISION_MODEL)
     llm = LLMClient()
-    data = enrich_dataset(data, llm, model=model)
+    data = enrich_dataset(data, llm, model=model, vision_model=vision_model)
 
     request_ids = sorted(data.requests, key=lambda rid: int(rid.split("_")[1]))
     rows = [format_decision(solve(data, data.requests[rid])) for rid in request_ids]

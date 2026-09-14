@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "amend",
+    "new_amount": "1422.85",
+    "new_currency": "EUR",
+    "note": "salary reduced due to approved unpaid leave",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"amend\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":\"1422.85\",\"new_currency\":\"EUR\",\"effective_date\":null,\"note\":\"salary reduced due to approved unpaid leave\"}",
+  "status": "parsed"
+}

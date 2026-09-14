@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": "2024-12-15",
+    "kind": "confirm",
+    "new_amount": "196000",
+    "new_currency": "INR",
+    "note": "Invoice approved for payment",
+    "target_category": "work_expense",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":null,\"target_category\":\"work_expense\",\"new_amount\":\"196000\",\"new_currency\":\"INR\",\"effective_date\":\"2024-12-15\",\"note\":\"Invoice approved for payment\"}",
+  "status": "parsed"
+}

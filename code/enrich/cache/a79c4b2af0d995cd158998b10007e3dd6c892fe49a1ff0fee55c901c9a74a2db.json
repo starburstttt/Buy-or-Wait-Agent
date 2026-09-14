@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": "2025-08-15",
+    "kind": "confirm",
+    "new_amount": "2112",
+    "new_currency": "USD",
+    "note": "Invoice approved for payment",
+    "target_category": "work_expense",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":null,\"target_category\":\"work_expense\",\"new_amount\":\"2112\",\"new_currency\":\"USD\",\"effective_date\":\"2025-08-15\",\"note\":\"Invoice approved for payment\"}",
+  "status": "parsed"
+}

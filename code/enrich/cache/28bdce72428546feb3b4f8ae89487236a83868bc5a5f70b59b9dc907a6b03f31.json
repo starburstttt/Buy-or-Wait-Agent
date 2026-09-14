@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "amend",
+    "new_amount": "2177.28",
+    "new_currency": "USD",
+    "note": "",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"amend\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":\"2177.28\",\"new_currency\":\"USD\",\"effective_date\":null,\"note\":\"\"}",
+  "status": "parsed"
+}

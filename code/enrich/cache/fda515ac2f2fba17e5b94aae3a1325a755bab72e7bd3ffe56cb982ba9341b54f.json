@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "no_fact",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "Bonus pending, no final amount or date provided",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"no_fact\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"Bonus pending, no final amount or date provided\"}",
+  "status": "parsed"
+}

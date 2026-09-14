@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": "2024-12-15",
+    "kind": "confirm",
+    "new_amount": "924",
+    "new_currency": "EUR",
+    "note": "client approved invoice",
+    "target_category": "work_expense",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":null,\"target_category\":\"work_expense\",\"new_amount\":\"924\",\"new_currency\":\"EUR\",\"effective_date\":\"2024-12-15\",\"note\":\"client approved invoice\"}",
+  "status": "parsed"
+}

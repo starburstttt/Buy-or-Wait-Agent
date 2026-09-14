@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": "2024-06-15",
+    "kind": "confirm",
+    "new_amount": "214000",
+    "new_currency": "INR",
+    "note": "",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":\"214000\",\"new_currency\":\"INR\",\"effective_date\":\"2024-06-15\",\"note\":\"\"}",
+  "status": "parsed"
+}

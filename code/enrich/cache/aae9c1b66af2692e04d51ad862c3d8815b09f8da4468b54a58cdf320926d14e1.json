@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "confirm",
+    "new_amount": "1750.32",
+    "new_currency": "EUR",
+    "note": "",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":\"1750.32\",\"new_currency\":\"EUR\",\"effective_date\":null,\"note\":\"\"}",
+  "status": "parsed"
+}

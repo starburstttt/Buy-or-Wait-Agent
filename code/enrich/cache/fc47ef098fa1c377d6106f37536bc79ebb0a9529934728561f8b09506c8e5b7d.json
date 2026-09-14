@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "confirm",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "Refund of 65.12 EUR pending",
+    "target_category": null,
+    "target_event_id": "event_17662"
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":\"event_17662\",\"target_category\":null,\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"Refund of 65.12 EUR pending\"}",
+  "status": "parsed"
+}

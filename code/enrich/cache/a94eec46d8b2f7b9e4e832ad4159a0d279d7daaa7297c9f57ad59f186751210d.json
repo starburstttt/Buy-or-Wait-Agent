@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": "2024-09-15",
+    "kind": "confirm",
+    "new_amount": "46170000",
+    "new_currency": "IDR",
+    "note": "Gaji pertama dari perusahaan baru dikonfirmasi",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":\"46170000\",\"new_currency\":\"IDR\",\"effective_date\":\"2024-09-15\",\"note\":\"Gaji pertama dari perusahaan baru dikonfirmasi\"}",
+  "status": "parsed"
+}

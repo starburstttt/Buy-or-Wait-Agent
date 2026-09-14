@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "no_fact",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "",
+    "target_category": null,
+    "target_event_id": "event_21582"
+  },
+  "raw_text": "{\"kind\":\"no_fact\",\"target_event_id\":\"event_21582\",\"target_category\":null,\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"\"}",
+  "status": "parsed"
+}

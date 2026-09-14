@@ -54,7 +54,7 @@ from .llm import Completion, DailyBudgetExceeded, LLMClient  # noqa: E402
 # Bump when the prompt or the validation rules change in a way that could change the
 # answer for the same image. Separate from the message layer's version so that
 # changing one contract never invalidates the other's cache.
-IMAGE_CONTRACT_VERSION = "v1"
+IMAGE_CONTRACT_VERSION = "v2"
 
 MAX_OUTPUT_TOKENS = 200
 
@@ -72,6 +72,12 @@ SYSTEM_PROMPT = (
     "a current total or amount due is shown.\n"
     "- If the document shows an amount due by a date and a higher amount after that "
     "date, report the amount due BY the date.\n"
+    "- INDIAN DIGIT GROUPING: on Indian documents the separators are lakh/crore "
+    "style, not thousands - the groups run 2,2,3 from the right, so \"1,00,000.00\" "
+    "is one hundred thousand (100000.00), \"2,00,000.00\" is two hundred thousand "
+    "(200000.00) and \"12,34,567\" is 1234567. Count the digits themselves rather "
+    "than assuming every comma marks a thousand; a group of exactly 2 digits "
+    "anywhere left of the last 3 means the number is grouped this way.\n"
     "- currency: the currency shown on the document, or null if unclear.\n"
     "- label: a few words naming the line you took the amount from.\n"
     "- If no amount for this transaction is legible, set amount to null.\n"
@@ -276,12 +282,19 @@ def resolve_all(data: Dataset, llm: LLMClient, *, model: str) -> dict[str, Image
 def apply_amounts(
     events: tuple[Event, ...], amounts: dict[str, ImageAmount]
 ) -> tuple[Event, ...]:
-    """Fill in the resolved amounts on a user's event tuple."""
+    """Fill in the resolved amounts on a user's event tuple.
+
+    Fills only; never overwrites. An event whose amount is already set by the time
+    this runs was set by a message fact, and problem_statement.md ranks an explicit
+    amendment above other evidence - the image is the original document behind a
+    field the CSV left blank, so it loses that tie. Three of the sixteen blank
+    events are referenced by a message, so this is a live case, not a hypothetical.
+    """
     import dataclasses
 
     return tuple(
         dataclasses.replace(event, amount=amounts[event.event_id].amount)
-        if event.event_id in amounts
+        if event.amount is None and event.event_id in amounts
         else event
         for event in events
     )

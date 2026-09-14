@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "confirm",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "dispute pending, reversal not posted",
+    "target_category": null,
+    "target_event_id": "event_19334"
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":\"event_19334\",\"target_category\":null,\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"dispute pending, reversal not posted\"}",
+  "status": "parsed"
+}

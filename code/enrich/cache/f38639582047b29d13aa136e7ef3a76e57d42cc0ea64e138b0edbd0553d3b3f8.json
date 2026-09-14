@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "confirm",
+    "new_amount": "48260000",
+    "new_currency": "IDR",
+    "note": "",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":\"48260000\",\"new_currency\":\"IDR\",\"effective_date\":null,\"note\":\"\"}",
+  "status": "parsed"
+}

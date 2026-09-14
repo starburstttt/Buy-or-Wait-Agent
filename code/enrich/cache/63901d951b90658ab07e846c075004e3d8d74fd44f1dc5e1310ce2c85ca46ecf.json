@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": "2026-07-24",
+    "kind": "confirm",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "payment received",
+    "target_category": null,
+    "target_event_id": "event_4535"
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":\"event_4535\",\"target_category\":null,\"new_amount\":null,\"new_currency\":null,\"effective_date\":\"2026-07-24\",\"note\":\"payment received\"}",
+  "status": "parsed"
+}

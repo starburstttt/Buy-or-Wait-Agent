@@ -20,6 +20,7 @@ from loaders import load_dataset  # noqa: E402
 from solver import enrich_dataset, solve  # noqa: E402
 
 DEFAULT_MODEL = "openai/gpt-oss-120b"
+DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b"
 
 AMOUNT_REL_TOLERANCE = Decimal("0.01")  # 1% of the expected amount
 AMOUNT_ABS_TOLERANCE = Decimal("0.01")  # floor, so near-zero amounts aren't absurdly strict
@@ -70,7 +71,8 @@ def amount_within_tolerance(expected: Decimal, actual: Decimal) -> bool:
 def run() -> int:
     data = load_dataset()
     model = os.environ.get("MODEL", DEFAULT_MODEL)
-    data = enrich_dataset(data, LLMClient(), model=model)
+    vision_model = os.environ.get("VISION_MODEL", DEFAULT_VISION_MODEL)
+    data = enrich_dataset(data, LLMClient(), model=model, vision_model=vision_model)
     sample_ids = sorted(data.sample_requests, key=lambda rid: int(rid.split("_")[1]))
 
     misses: list[tuple[str, str, str, str]] = []

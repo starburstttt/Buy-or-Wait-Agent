@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "amend",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "renewed lease increases monthly rent by 12%",
+    "target_category": "rent",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"amend\",\"target_event_id\":null,\"target_category\":\"rent\",\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"renewed lease increases monthly rent by 12%\"}",
+  "status": "parsed"
+}

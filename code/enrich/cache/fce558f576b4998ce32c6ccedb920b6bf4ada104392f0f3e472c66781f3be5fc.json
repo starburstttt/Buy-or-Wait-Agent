@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "amend",
+    "new_amount": "30400000",
+    "new_currency": "IDR",
+    "note": "Routine salary amount updated",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"amend\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":\"30400000\",\"new_currency\":\"IDR\",\"effective_date\":null,\"note\":\"Routine salary amount updated\"}",
+  "status": "parsed"
+}

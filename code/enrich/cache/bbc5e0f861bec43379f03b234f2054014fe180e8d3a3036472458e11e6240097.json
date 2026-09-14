@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": null,
+    "kind": "confirm",
+    "new_amount": null,
+    "new_currency": null,
+    "note": "Refund pending for known event event_7186",
+    "target_category": null,
+    "target_event_id": "event_7186"
+  },
+  "raw_text": "{\"kind\":\"confirm\",\"target_event_id\":\"event_7186\",\"target_category\":null,\"new_amount\":null,\"new_currency\":null,\"effective_date\":null,\"note\":\"Refund pending for known event event_7186\"}",
+  "status": "parsed"
+}

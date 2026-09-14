@@ -1,0 +1,14 @@
+{
+  "detail": "",
+  "fact": {
+    "effective_date": "2026-07-15",
+    "kind": "amend",
+    "new_amount": "627",
+    "new_currency": "EUR",
+    "note": "",
+    "target_category": "salary",
+    "target_event_id": null
+  },
+  "raw_text": "{\"kind\":\"amend\",\"target_event_id\":null,\"target_category\":\"salary\",\"new_amount\":\"627\",\"new_currency\":\"EUR\",\"effective_date\":\"2026-07-15\",\"note\":\"\"}",
+  "status": "parsed"
+}

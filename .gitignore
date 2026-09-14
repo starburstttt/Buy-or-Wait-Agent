@@ -2,5 +2,5 @@ log.txt
 .env
 __pycache__/
 .venv/
-cache/
+code/enrich/cache/_daily_usage.json
 .claude/
