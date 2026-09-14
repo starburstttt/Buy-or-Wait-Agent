@@ -1,4 +1,4 @@
-# Buy or Wait? — an AI financial decision agent
+# Buy or Wait? — an AI Agent for financial decisions
 
 HackerRank Orchestrate, September 2026. For each of the 250 purchase requests in
 `dataset/requests.csv`, this system reconstructs the user's financial position from
